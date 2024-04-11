@@ -140,11 +140,13 @@
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="utils\ChilWin.h" />
+    <ClInclude Include="utils\Window.h" />
     <ClInclude Include="utils\WindowsMessageMap.h" />
     <ClInclude Include="utils\WindowsThrowMacros.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Chip8Emu.cpp" />
+    <ClCompile Include="utils\Window.cpp" />
     <ClCompile Include="utils\WindowsMessageMap.cpp" />
   </ItemGroup>
   <ItemGroup>
