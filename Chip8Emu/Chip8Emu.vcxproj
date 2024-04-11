@@ -137,7 +137,7 @@
   <ItemGroup>
     <ClInclude Include="Chip8Emu.h" />
     <ClInclude Include="framework.h" />
-    <ClInclude Include="Resource.h" />
+    <ClInclude Include="ResourceFiles/Resource.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="utils\ChilWin.h" />
     <ClInclude Include="utils\Chip8Exception.h" />
@@ -152,11 +152,11 @@
     <ClCompile Include="utils\WindowsMessageMap.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="Chip8Emu.rc" />
+    <ResourceCompile Include="ResourceFiles/Chip8Emu.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="Chip8Emu.ico" />
-    <Image Include="small.ico" />
+    <Image Include="ResourceFiles\Chip8Emu.ico" />
+    <Image Include="ResourceFiles\small.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

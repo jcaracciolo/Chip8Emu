@@ -2,7 +2,7 @@
 
 #include "WindowsMessageMap.h"
 #include "ChilWin.h"
-#include "../Resource.h"
+#include "../ResourceFiles/Resource.h"
 #include <WinUser.h>
 #include <sstream>
 
@@ -100,7 +100,7 @@ HINSTANCE Window::WindowClass::GetInstance() noexcept
     return wndClass.hInst;
 }
 
-Window::Window(int width, int height, const LPCWSTR name) noexcept : width(width), height(height)
+Window::Window(int width, int height, const LPCWSTR name) : width(width), height(height)
 {
 
     RECT wr;
@@ -110,7 +110,11 @@ Window::Window(int width, int height, const LPCWSTR name) noexcept : width(width
     wr.bottom = height + wr.top;
 
     // Change the boolean to TRUE whenever we add a menu to the window
-    AdjustWindowRect(&wr, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, FALSE);
+    
+    if(!AdjustWindowRect(&wr, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, FALSE))
+    {
+        throw WND_LAST_EXCEPT();
+    }
 
     HWND hWnd = CreateWindowEx(
         0,
@@ -126,6 +130,11 @@ Window::Window(int width, int height, const LPCWSTR name) noexcept : width(width
         WindowClass::GetInstance(),
         // Providing a reference to this class that will be passed to WN_NCCREATE
         this);
+
+    if(!hWnd)
+    {
+        throw WND_LAST_EXCEPT();
+    }
     
     ShowWindow(hWnd,  SW_SHOWDEFAULT);
 
@@ -217,7 +226,9 @@ INT_PTR CALLBACK About(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         }
         break;
     default:
-        return (INT_PTR)FALSE;
+        break;
     }
+
+    return (INT_PTR)FALSE;
 }
 

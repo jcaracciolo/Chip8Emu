@@ -39,7 +39,7 @@ private:
     };
 
 public:
-    Window(int width, int height, const LPCWSTR name) noexcept;
+    Window(int width, int height, const LPCWSTR name);
     ~Window();
     Window(const Window& other) = delete;
     Window(Window&& other) noexcept = delete;
@@ -58,3 +58,4 @@ private:
 };
 
 #define WND_EXCEPT(hr) Window::Exception(__LINE__, __FILE__, hr);
+#define WND_LAST_EXCEPT() Window::Exception(__LINE__, __FILE__, GetLastError());
