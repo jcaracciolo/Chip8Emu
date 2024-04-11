@@ -192,6 +192,23 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             // }
         }
         break;
+    case WM_KEYDOWN:
+    case WM_SYSKEYDOWN:
+        if(!(lParam & KF_REPEAT) || kb.AutoRepeatIsEnabled())
+        {
+            kb.onKeyPressed(static_cast<unsigned char>(wParam));
+        }
+        break;
+    case WM_KEYUP:
+    case WM_SYSKEYUP:
+        kb.onKeyReleased(static_cast<unsigned char>(wParam));
+        break;
+    case WM_CHAR:
+        kb.OnChar(static_cast<char>(wParam));
+        break;
+    case WM_KILLFOCUS:
+        kb.ClearState();
+        break;
     case WM_PAINT:
         {
             PAINTSTRUCT ps;

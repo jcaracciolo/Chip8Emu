@@ -3,6 +3,7 @@
 
 #include "utils/ChilWin.h"
 #include "utils/Window.h"
+#include "utils/Keyboard.h"
 #include "Chip8Emu.h"
 
 #define MAX_LOADSTRING 100
@@ -41,6 +42,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                 // No need for this unless we need WM_CHAR
                 //TranslateMessage(&msg);
                 DispatchMessage(&msg);
+                if(wnd.kb.KeyIsPressed(VK_SPACE))
+                {
+                    MessageBoxA(nullptr, "SOMETHING", "Whatever", MB_OK | MB_ICONHAND);
+                }
             }
         }
 

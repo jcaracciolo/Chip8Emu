@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "ChilWin.h"
 #include "Chip8Exception.h"
+#include "Keyboard.h"
 
 class Window
 {
@@ -50,6 +51,9 @@ private:
     static LRESULT CALLBACK HandleMsgSetup(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) noexcept;
     static LRESULT CALLBACK HandleMsgThunk(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) noexcept;
     LRESULT HandleMsg(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) noexcept;
+
+public:
+    Keyboard kb;
 
 private:
     int width;
