@@ -1,8 +1,24 @@
 ﻿#pragma once
 #include "ChilWin.h"
+#include "Chip8Exception.h"
 
 class Window
 {
+public:
+    class Exception : public Chip8Exception
+    {
+    public:
+        Exception(int line, const char* file, HRESULT hr) noexcept;
+        const char* what() const noexcept override;
+        virtual const char* GetType() const noexcept override;
+        static std::string TranslateErrorCode(HRESULT hResult) noexcept;
+        HRESULT GetErrorCode() const noexcept;
+        std::string GetErrorString() const noexcept;
+
+    private:
+        HRESULT hr;
+    };
+
 private:
     class WindowClass
     {
@@ -40,3 +56,5 @@ private:
     int height;
     HWND hWnd;
 };
+
+#define WND_EXCEPT(hr) Window::Exception(__LINE__, __FILE__, hr);

@@ -25,23 +25,37 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     // Initialize global strings
     LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
     LoadStringW(hInstance, IDC_CHIP8EMU, szWindowClass, MAX_LOADSTRING);
-    
-    Window wnd{420,420, L"Chip8Emu" };
-    HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_CHIP8EMU));
 
-    MSG msg;
-
-    // Main message loop:
-    while (GetMessage(&msg, nullptr, 0, 0))
+    try
     {
-        if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
+        Window wnd{420,420, L"Chip8Emu" };
+        HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_CHIP8EMU));
+
+        MSG msg;
+
+        // Main message loop:
+        while (GetMessage(&msg, nullptr, 0, 0))
         {
-            // No need for this unless we need WM_CHAR
-            //TranslateMessage(&msg);
-            DispatchMessage(&msg);
+            if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
+            {
+                // No need for this unless we need WM_CHAR
+                //TranslateMessage(&msg);
+                DispatchMessage(&msg);
+            }
         }
+
+
+        return static_cast<int>(msg.wParam);
+    } catch (const Chip8Exception& e)
+    {
+        MessageBoxA(nullptr, e.what(), e.GetType(), MB_OK |MB_ICONEXCLAMATION);
+    } catch (const std::exception& e)
+    {
+        MessageBoxA(nullptr, e.what(), "Standard Exception", MB_OK | MB_ICONEXCLAMATION);
+    } catch ( ... )
+    {
+        MessageBoxA(nullptr, "No details available", "Unknown Exception", MB_OK | MB_ICONEXCLAMATION);
     }
 
-
-    return static_cast<int>(msg.wParam);
+    return -1;
 }
