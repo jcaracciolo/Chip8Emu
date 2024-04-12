@@ -144,20 +144,24 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Chip8Emu.h" />
-    <ClInclude Include="framework.h" />
     <ClInclude Include="ResourceFiles/Resource.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="utils\App.h" />
     <ClInclude Include="utils\ChilWin.h" />
     <ClInclude Include="utils\Chip8Exception.h" />
+    <ClInclude Include="utils\framework.h" />
     <ClInclude Include="utils\Keyboard.h" />
+    <ClInclude Include="utils\MyTimer.h" />
     <ClInclude Include="utils\Window.h" />
     <ClInclude Include="utils\WindowsMessageMap.h" />
     <ClInclude Include="utils\WindowsThrowMacros.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Chip8Emu.cpp" />
+    <ClCompile Include="utils\App.cpp" />
     <ClCompile Include="utils\Chip8Exception.cpp" />
     <ClCompile Include="utils\Keyboard.cpp" />
+    <ClCompile Include="utils\MyTimer.cpp" />
     <ClCompile Include="utils\Window.cpp" />
     <ClCompile Include="utils\WindowsMessageMap.cpp" />
   </ItemGroup>

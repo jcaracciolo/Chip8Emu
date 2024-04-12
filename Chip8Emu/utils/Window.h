@@ -6,6 +6,15 @@
 class Window
 {
 public:
+    Window(const LPCWSTR name, int width, int height);
+    ~Window();
+    Window(const Window& other) = delete;
+    Window(Window&& other) noexcept = delete;
+    Window& operator=(const Window& other) = delete;
+    Window& operator=(Window&& other) noexcept = delete;
+    void SetTitle(const std::string& title);
+    static std::optional<int> ProcessMessage();
+
     class Exception : public Chip8Exception
     {
     public:
@@ -38,14 +47,6 @@ private:
         static WindowClass wndClass;
         HINSTANCE hInst;
     };
-
-public:
-    Window(int width, int height, const LPCWSTR name);
-    ~Window();
-    Window(const Window& other) = delete;
-    Window(Window&& other) noexcept = delete;
-    Window& operator=(const Window& other) = delete;
-    Window& operator=(Window&& other) noexcept = delete;
 
 private:
     static LRESULT CALLBACK HandleMsgSetup(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) noexcept;

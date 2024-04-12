@@ -6,6 +6,8 @@
 #include <WinUser.h>
 #include <sstream>
 
+#include "WindowsThrowMacros.h"
+
 // Window Class Stuff
 Window::WindowClass Window::WindowClass::wndClass;
 
@@ -100,7 +102,7 @@ HINSTANCE Window::WindowClass::GetInstance() noexcept
     return wndClass.hInst;
 }
 
-Window::Window(int width, int height, const LPCWSTR name) : width(width), height(height)
+Window::Window(const LPCWSTR name, int width, int height) : width(width), height(height)
 {
 
     RECT wr;
@@ -116,7 +118,7 @@ Window::Window(int width, int height, const LPCWSTR name) : width(width), height
         throw WND_LAST_EXCEPT();
     }
 
-    HWND hWnd = CreateWindowEx(
+    hWnd = CreateWindowEx(
         0,
         WindowClass::GetName(),
         name,
@@ -135,7 +137,7 @@ Window::Window(int width, int height, const LPCWSTR name) : width(width), height
     {
         throw WND_LAST_EXCEPT();
     }
-    
+
     ShowWindow(hWnd,  SW_SHOWDEFAULT);
 
 }
@@ -143,6 +145,33 @@ Window::Window(int width, int height, const LPCWSTR name) : width(width), height
 Window::~Window()
 {
     DestroyWindow(hWnd);
+}
+
+void Window::SetTitle(const std::string& title)
+{
+    if( SetWindowText(hWnd, std::wstring(title.begin(), title.end()).c_str()) == 0 )
+    {
+        throw WND_LAST_EXCEPT();
+    }
+}
+
+std::optional<int> Window::ProcessMessage()
+{
+    MSG msg;
+
+    while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+    {
+        if(msg.message == WM_QUIT)
+        {
+            return static_cast<int>(msg.wParam);
+        }
+            
+        // No need for this unless we need WM_CHAR
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+
+    return {};
 }
 
 LRESULT Window::HandleMsgSetup(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) noexcept
