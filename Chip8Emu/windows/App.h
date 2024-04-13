@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "MyTimer.h"
+#include "../utils/MyTimer.h"
 #include "Window.h"
 #define MAX_LOADSTRING 100
 

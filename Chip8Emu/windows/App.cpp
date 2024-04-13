@@ -4,9 +4,9 @@
 #include <ostream>
 #include <sstream>
 
-#include "ChilWin.h"
+#include "LightWindows.h"
 #include "Window.h"
-#include "Keyboard.h"
+#include "../utils/Keyboard.h"
 
 App::App(LPCWSTR title, int height, int width): wnd(title, height, width)
 {

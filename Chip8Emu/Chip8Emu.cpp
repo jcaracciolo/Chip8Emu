@@ -1,9 +1,9 @@
 // Chip8Emu.cpp : Defines the entry point for the application.
 //
 
-#include "utils/ChilWin.h"
+#include "windows/LightWindows.h"
 #include "Chip8Emu.h"
-#include "utils/App.h"
+#include "windows/App.h"
 
 int window_height = 460;
 int window_width = 480;

@@ -1,7 +1,7 @@
 ﻿#pragma once
-#include "ChilWin.h"
-#include "Chip8Exception.h"
-#include "Keyboard.h"
+#include "LightWindows.h"
+#include "../utils/Chip8Exception.h"
+#include "../utils/Keyboard.h"
 
 class Window
 {
