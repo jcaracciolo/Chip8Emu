@@ -3,8 +3,7 @@
 
 #pragma comment(lib, "d3d11.lib")
 
-#define GFX_THROW_FAILED(hrcall) if( FAILED(hr = (hrcall) ) ) throw Graphics::HrException(__LINE__, __FILE__, hr)
-#define GFX_DEVICE_REMOVED_EXCEPT(hr) Graphics::DeviceRemovedException(__LINE__, __FILE__, hr)
+namespace wrl = Microsoft::WRL;
 
 Graphics::Graphics(HWND hWnd)
 {
@@ -25,10 +24,16 @@ Graphics::Graphics(HWND hWnd)
     sd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
     sd.Flags = 0;
 
+    UINT swapCreateFlags = 0u;
+#ifndef NDEBUG
+    swapCreateFlags |= D3D11_CREATE_DEVICE_DEBUG;
+#endif
+    
+
     HRESULT hr;
-    GFX_THROW_FAILED(
+    GFX_THROW_INFO(
         D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, // We require a hardware graphics card
-                                  nullptr, 0, nullptr, // We don't care about featureLevel (like min-API supported)
+                                  nullptr, swapCreateFlags, nullptr, // We don't care about featureLevel (like min-API supported)
                                   0, D3D11_SDK_VERSION, &sd, // Descriptor of what the swap chain and buffers should look like
                                   &pSwap, // SwapChain is in control of the front and back buffer
                                   &pDevice, // Device represents the graphics card and all the orchestration
@@ -36,38 +41,22 @@ Graphics::Graphics(HWND hWnd)
                                   &pContext) // Context is in charge of rendering commands
     );
 
-    ID3D11Resource* pBackBuffer = nullptr;
+    wrl::ComPtr<ID3D11Resource> pBackBuffer;
     
     // gain access to the texture subresource in swap chain (back buffer)
     // 0 is the back buffer
-    GFX_THROW_FAILED(pSwap->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&pBackBuffer)));  // NOLINT(clang-diagnostic-language-extension-token)
-    GFX_THROW_FAILED(pDevice->CreateRenderTargetView(pBackBuffer,nullptr, &pTarget));
-    pBackBuffer->Release();
-
+    GFX_THROW_INFO(pSwap->GetBuffer(0, __uuidof(ID3D11Texture2D), &pBackBuffer));  // NOLINT(clang-diagnostic-language-extension-token)
+    GFX_THROW_INFO(pDevice->CreateRenderTargetView(pBackBuffer.Get(),nullptr, &pTarget));
     
-}
-
-Graphics::~Graphics()
-{
-    if(pContext)
-    {
-        pContext->Release();
-    }
-
-    if(pSwap)
-    {
-        pSwap -> Release();
-    }
-
-    if(pDevice)
-    {
-        pDevice->Release();
-    }
 }
 
 void Graphics::EndFrame()
 {
     HRESULT hr;
+
+#ifndef NDEBUG
+    infoManager.Set();
+#endif
 
     // Select 1 for hitting all the refresh frames, 2 can skip every other frame and such
     if( FAILED( hr = pSwap->Present(1u, 0) ) )
@@ -78,20 +67,32 @@ void Graphics::EndFrame()
         }
         else
         {
-            GFX_THROW_FAILED(hr);
+            throw GFX_EXCEPT(hr);
         }
     }
 }
 
-void Graphics::ClearBuffer(float red, float green, float blue)
+void Graphics::ClearBuffer(float red, float green, float blue) const
 {
     const float color[] = {red, green, blue};
-    pContext->ClearRenderTargetView(pTarget, color);
+    pContext->ClearRenderTargetView(pTarget.Get(), color);
     
 }
 
-Graphics::HrException::HrException(int line, const char* file, HRESULT hr) noexcept: Chip8Exception(line, file), hr(hr)
+Graphics::HrException::HrException(int line, const char* file, HRESULT hr, std::vector<std::string> infoMsgs) noexcept: Chip8Exception(line, file), hr(hr)
 {
+    // join all info messages with newlines into single string
+    for( const auto& m : infoMsgs )
+    {
+        info += m;
+        info.push_back( '\n' );
+        info.push_back( '\n' );
+    }
+    // remove final newline if exists
+    if( !info.empty() )
+    {
+        info.pop_back();
+    }
 }
 
 const char* Graphics::HrException::what() const noexcept
@@ -99,8 +100,10 @@ const char* Graphics::HrException::what() const noexcept
     std::ostringstream oss;
     oss << GetType() << '\n'
     << "[Error Code] 0x" << std::hex << std::uppercase << GetErrorCode() << std::dec << " (" << GetErrorCode() << ")\n"
-    << "[Description] " << GetErrorString() << '\n'
+    << "[Description] \n" << GetErrorString() << '\n' << '\n'
+    << "[ErrorInfo] \n" << GetErrorInfo() << '\n' << '\n'
     << GetOriginString();
+    
     whatBuffer = oss.str();
 
     return whatBuffer.c_str();
@@ -144,6 +147,11 @@ HRESULT Graphics::HrException::GetErrorCode() const noexcept
 std::string Graphics::HrException::GetErrorString() const noexcept
 {
     return TranslateErrorCode(hr);
+}
+
+std::string Graphics::HrException::GetErrorInfo() const noexcept
+{
+    return info;
 }
 
 const char* Graphics::DeviceRemovedException::GetType() const noexcept

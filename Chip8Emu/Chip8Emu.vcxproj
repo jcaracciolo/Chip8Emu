@@ -152,6 +152,7 @@
     <ClInclude Include="utils\Keyboard.h" />
     <ClInclude Include="utils\MyTimer.h" />
     <ClInclude Include="windows\App.h" />
+    <ClInclude Include="windows\graphics\DxgiInfoManager.h" />
     <ClInclude Include="windows\graphics\Graphics.h" />
     <ClInclude Include="windows\LightWindows.h" />
     <ClInclude Include="windows\Window.h" />
@@ -237,6 +238,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LinkCompiled>true</LinkCompiled>
     </ClCompile>
+    <ClCompile Include="windows\graphics\DxgiInfoManager.cpp" />
     <ClCompile Include="windows\graphics\Graphics.cpp" />
     <ClCompile Include="windows\Window.cpp">
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
