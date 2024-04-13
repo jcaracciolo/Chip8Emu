@@ -6,8 +6,9 @@
 #include <WinUser.h>
 #include <sstream>
 
-#include "WindowsThrowMacros.h"
-
+#define WND_EXCEPT(hr) Window::Exception(__LINE__, __FILE__, hr);
+#define WND_LAST_EXCEPT() Window::Exception(__LINE__, __FILE__, GetLastError());
+#define WND_NOGFX_EXCEPT() Window::NoGraphicsException(__LINE__, __FILE__);
 // Window Class Stuff
 Window::WindowClass Window::WindowClass::wndClass;
 
@@ -19,7 +20,7 @@ const char* Window::Exception::what() const noexcept
 {
     std::ostringstream oss;
     oss << GetType() << '\n'
-    << "[Error Code] " << GetErrorCode() << '\n'
+    << "[Error Code] 0x" << std::hex << std::uppercase << GetErrorCode() << std::dec << " (" << GetErrorCode() << ")\n"
     << "[Description] " << GetErrorString() << '\n'
     << GetOriginString();
     whatBuffer = oss.str();
@@ -64,6 +65,11 @@ HRESULT Window::Exception::GetErrorCode() const noexcept
 std::string Window::Exception::GetErrorString() const noexcept
 {
     return TranslateErrorCode(hr);
+}
+
+const char* Window::NoGraphicsException::GetType() const noexcept
+{
+    return "No graphics found";
 }
 
 Window::WindowClass::WindowClass() noexcept : hInst( GetModuleHandle(nullptr))
@@ -139,12 +145,21 @@ Window::Window(const LPCWSTR name, int width, int height) : width(width), height
     }
 
     ShowWindow(hWnd,  SW_SHOWDEFAULT);
-
+    pGfx = std::make_unique<Graphics>(hWnd);
 }
 
 Window::~Window()
 {
     DestroyWindow(hWnd);
+}
+
+Graphics& Window::Gfx()
+{
+    if(!pGfx)
+    {
+        throw WND_NOGFX_EXCEPT();
+    }
+    return *pGfx;
 }
 
 void Window::SetTitle(const std::string& title)

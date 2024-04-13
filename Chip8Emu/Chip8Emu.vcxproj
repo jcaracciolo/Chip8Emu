@@ -140,6 +140,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>d3d11.lib;$(CoreLibraryDependencies);%(AdditionalDependencies);</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -151,10 +152,10 @@
     <ClInclude Include="utils\Keyboard.h" />
     <ClInclude Include="utils\MyTimer.h" />
     <ClInclude Include="windows\App.h" />
+    <ClInclude Include="windows\graphics\Graphics.h" />
     <ClInclude Include="windows\LightWindows.h" />
     <ClInclude Include="windows\Window.h" />
     <ClInclude Include="windows\WindowsMessageMap.h" />
-    <ClInclude Include="windows\WindowsThrowMacros.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Chip8Emu.cpp" />
@@ -236,6 +237,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LinkCompiled>true</LinkCompiled>
     </ClCompile>
+    <ClCompile Include="windows\graphics\Graphics.cpp" />
     <ClCompile Include="windows\Window.cpp">
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>

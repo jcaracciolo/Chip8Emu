@@ -2,6 +2,9 @@
 #include "LightWindows.h"
 #include "../utils/Chip8Exception.h"
 #include "../utils/Keyboard.h"
+#include "graphics/Graphics.h"
+#include <memory.h>
+#include <memory>
 
 class Window
 {
@@ -12,8 +15,13 @@ public:
     Window(Window&& other) noexcept = delete;
     Window& operator=(const Window& other) = delete;
     Window& operator=(Window&& other) noexcept = delete;
+
+    
     void SetTitle(const std::string& title);
     static std::optional<int> ProcessMessage();
+
+    Keyboard kb;
+    Graphics& Gfx();
 
     class Exception : public Chip8Exception
     {
@@ -27,6 +35,13 @@ public:
 
     private:
         HRESULT hr;
+    };
+
+    class NoGraphicsException : public Chip8Exception
+    {
+    public:
+        using Chip8Exception::Chip8Exception;
+        const char* GetType() const noexcept override;
     };
 
 private:
@@ -53,14 +68,9 @@ private:
     static LRESULT CALLBACK HandleMsgThunk(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) noexcept;
     LRESULT HandleMsg(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) noexcept;
 
-public:
-    Keyboard kb;
-
-private:
     int width;
     int height;
     HWND hWnd;
+    std::unique_ptr<Graphics> pGfx;
 };
 
-#define WND_EXCEPT(hr) Window::Exception(__LINE__, __FILE__, hr);
-#define WND_LAST_EXCEPT() Window::Exception(__LINE__, __FILE__, GetLastError());

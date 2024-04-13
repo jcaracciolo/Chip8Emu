@@ -14,36 +14,20 @@ App::App(LPCWSTR title, int height, int width): wnd(title, height, width)
 
 int App::Run()
 {
-    try
+    while(true)
     {
-        while(true)
+        if(const auto ecode = Window::ProcessMessage())
         {
-            if(const auto ecode = Window::ProcessMessage())
-            {
-                return *ecode;
-            }
-
-            DrawFrame();
+            return *ecode;
         }
 
-    } catch (const Chip8Exception& e)
-    {
-        MessageBoxA(nullptr, e.what(), e.GetType(), MB_OK |MB_ICONEXCLAMATION);
-    } catch (const std::exception& e)
-    {
-        MessageBoxA(nullptr, e.what(), "Standard Exception", MB_OK | MB_ICONEXCLAMATION);
-    } catch ( ... )
-    {
-        MessageBoxA(nullptr, "No details available", "Unknown Exception", MB_OK | MB_ICONEXCLAMATION);
+        DrawFrame();
     }
-
-    return -1;
 }
 
 void App::DrawFrame()
 {
-    const float t = timer.Peek();
-    std::ostringstream oss;
-    oss << "Time elapsed: " << std::setprecision(1) << std::fixed << t << "s";
-    wnd.SetTitle(oss.str());
+    const float c = sin( timer.Peek()) / 2.0f + 0.5f;
+    wnd.Gfx().ClearBuffer(c,c/4,c/2);
+    wnd.Gfx().EndFrame();
 }
