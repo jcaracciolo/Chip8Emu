@@ -1,8 +1,6 @@
 ﻿#include "App.h"
 
 #include <iomanip>
-#include <ostream>
-#include <sstream>
 
 #include "LightWindows.h"
 #include "Window.h"
@@ -29,5 +27,6 @@ void App::DrawFrame()
 {
     const float c = sin( timer.Peek()) / 2.0f + 0.5f;
     wnd.Gfx().ClearBuffer(c,c/4,c/2);
+    wnd.Gfx().DrawTestTriangle();
     wnd.Gfx().EndFrame();
 }

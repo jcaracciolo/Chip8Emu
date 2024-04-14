@@ -5,14 +5,12 @@
 #include "Chip8Emu.h"
 #include "windows/App.h"
 
-int window_height = 460;
-int window_width = 480;
-
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
 {
+    auto app = App{L"Chip8Emu - Best emu", WINDOW_HEIGHT, WINDOW_WIDTH};
     try
     {
-        return App{L"Chip8Emu - Best emu", window_height, window_width}.Run();
+        return app.Run();
     }
     catch (const Chip8Exception& e)
     {

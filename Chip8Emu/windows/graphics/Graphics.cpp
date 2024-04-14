@@ -1,7 +1,9 @@
 ﻿#include "Graphics.h"
 #include <sstream>
+#include <d3dcompiler.h>
 
 #pragma comment(lib, "d3d11.lib")
+#pragma comment(lib, "D3DCompiler.lib")
 
 namespace wrl = Microsoft::WRL;
 
@@ -79,7 +81,7 @@ void Graphics::ClearBuffer(float red, float green, float blue) const
     
 }
 
-Graphics::HrException::HrException(int line, const char* file, HRESULT hr, std::vector<std::string> infoMsgs) noexcept: Chip8Exception(line, file), hr(hr)
+Graphics::Exception::Exception(int line, const char* file, std::vector<std::string> infoMsgs) noexcept: Chip8Exception(line, file)
 {
     // join all info messages with newlines into single string
     for( const auto& m : infoMsgs )
@@ -93,6 +95,22 @@ Graphics::HrException::HrException(int line, const char* file, HRESULT hr, std::
     {
         info.pop_back();
     }
+}
+
+Graphics::HrException::HrException(int line, const char* file, HRESULT hr, std::vector<std::string> infoMsgs) noexcept: Exception(line, file, infoMsgs), hr(hr)
+{
+}
+
+const char* Graphics::Exception::what() const noexcept
+{
+    std::ostringstream oss;
+    oss << GetType() << '\n'
+    << "[ErrorInfo] \n" << GetErrorInfo() << '\n' << '\n'
+    << GetOriginString();
+    
+    whatBuffer = oss.str();
+
+    return whatBuffer.c_str();
 }
 
 const char* Graphics::HrException::what() const noexcept
@@ -109,9 +127,24 @@ const char* Graphics::HrException::what() const noexcept
     return whatBuffer.c_str();
 }
 
-const char* Graphics::HrException::GetType() const noexcept
+const char* Graphics::Exception::GetType() const noexcept
 {
     return "Graphics Exception";
+}
+
+const char* Graphics::HrException::GetType() const noexcept
+{
+    return "Graphics HResult Exception";
+}
+
+const char* Graphics::DeviceRemovedException::GetType() const noexcept
+{
+    return "Graphics Exception [Device Removed] (DXGI_ERROR_DEVICE_REMOVED)";
+}
+
+std::string Graphics::Exception::GetErrorInfo() const noexcept
+{
+    return info;
 }
 
 std::string Graphics::HrException::TranslateErrorCode(HRESULT hResult) noexcept
@@ -149,12 +182,4 @@ std::string Graphics::HrException::GetErrorString() const noexcept
     return TranslateErrorCode(hr);
 }
 
-std::string Graphics::HrException::GetErrorInfo() const noexcept
-{
-    return info;
-}
 
-const char* Graphics::DeviceRemovedException::GetType() const noexcept
-{
-    return "Graphics Exception [Device Removed] (DXGI_ERROR_DEVICE_REMOVED)";
-}
