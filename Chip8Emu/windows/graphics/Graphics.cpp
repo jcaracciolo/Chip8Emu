@@ -30,7 +30,6 @@ Graphics::Graphics(HWND hWnd)
 #ifndef NDEBUG
     swapCreateFlags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
-    
 
     HRESULT hr;
     GFX_THROW_INFO(
@@ -49,17 +48,19 @@ Graphics::Graphics(HWND hWnd)
     // 0 is the back buffer
     GFX_THROW_INFO(pSwap->GetBuffer(0, __uuidof(ID3D11Texture2D), &pBackBuffer));  // NOLINT(clang-diagnostic-language-extension-token)
     GFX_THROW_INFO(pDevice->CreateRenderTargetView(pBackBuffer.Get(),nullptr, &pTarget));
-    
+
+    SetupPipeline();
 }
 
 void Graphics::EndFrame()
 {
-    HRESULT hr;
-
+    DrawPixels();
+    
 #ifndef NDEBUG
     infoManager.Set();
 #endif
 
+    HRESULT hr;
     // Select 1 for hitting all the refresh frames, 2 can skip every other frame and such
     if( FAILED( hr = pSwap->Present(1u, 0) ) )
     {
@@ -74,11 +75,157 @@ void Graphics::EndFrame()
     }
 }
 
-void Graphics::ClearBuffer(float red, float green, float blue) const
+void Graphics::ClearBuffer(float red, float green, float blue)
 {
     const float color[] = {red, green, blue};
     pContext->ClearRenderTargetView(pTarget.Get(), color);
+
+    ClearScreen();
+}
+
+void Graphics::ClearScreen()
+{
+    indices.clear();
+}
+
+void Graphics::SetPixelOn(int x, int y)
+{
+    // We set up a Vertex Shader with all the possible values of the corners of the pixels
+    // These coordinates go from 0 (left of first pixel) to CHIP8_WIDTH+1 (right of first pixel)
+    // and form 0 (top of first pixel) to CHIP8_HEIGHT+1 (bottom of last pixel)
+    UINT32 rowSize = CHIP8_WIDTH+1;
     
+    const UINT32 topLeft = static_cast<UINT32>(x + y * rowSize);
+    const UINT32 topRight = static_cast<UINT32>(topLeft + 1);
+    const UINT32 bottomLeft = static_cast<UINT32>(topLeft + rowSize);
+    const UINT32 bottomRight = static_cast<UINT32>(bottomLeft + 1);
+
+    // We draw the triangles in a back facing way
+    // (when using the left hand it will render the back of it
+    // 2 triangles make 1 square
+    indices.insert(indices.cend(), {bottomRight, bottomLeft, topLeft, topLeft, topRight, bottomRight});
+}
+
+void Graphics::DrawPixels()
+{
+    UINT size = std::size(indices);
+    
+    D3D11_BUFFER_DESC ibd = {};
+    ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+    ibd.Usage = D3D11_USAGE_DEFAULT;
+    ibd.CPUAccessFlags = 0;
+    ibd.MiscFlags = 0;
+    ibd.ByteWidth = static_cast<UINT>(sizeof(Vertex) * size);
+    ibd.StructureByteStride = sizeof(Vertex);
+    D3D11_SUBRESOURCE_DATA irsd = {};
+    irsd.pSysMem = indices.data();
+    HRESULT hr;
+    GFX_THROW_INFO(pDevice->CreateBuffer(&ibd, &irsd, &pIndexBuffer));
+    
+    pContext->IASetIndexBuffer(pIndexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0 );
+    
+    GFX_THROW_INFO_ONLY(pContext->DrawIndexed(size,0, 0))
+        
+}
+
+void Graphics::SetupPipeline()
+{
+    if(pipelineSetup)
+    {
+        throw GFX_CUSTOM_EXCEPT("Grtaphic Pipeline was already setup");
+    }
+    pipelineSetup = true;
+
+    SetupVertexShader();
+    SetupPixelShader();
+
+    // Bind Render Target
+    pContext->OMSetRenderTargets(1, pTarget.GetAddressOf(), nullptr);
+
+    // Set the primitive topology
+    // Defines what to draw with the given points
+    pContext->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+    // Configure ViewPort
+    D3D11_VIEWPORT vp {
+        0,
+        0,
+        WINDOW_WIDTH,
+        WINDOW_HEIGHT,
+        0,0
+    };
+    
+    pContext->RSSetViewports(1, &vp);
+}
+
+void Graphics::SetupVertexShader()
+{
+    // Setup all possible corner of vertices for a CHIP8_WIDTH X CHIP8_HEIGHT screen to reference with indexes later
+    Vertex vertices[CHIP8_HEIGHT+1][CHIP8_WIDTH+1];
+    for(UINT16 y=0; y<=CHIP8_HEIGHT; y++) {
+        for(UINT16 x=0; x<=CHIP8_WIDTH; x++) {
+            vertices[y][x] = {x,y};
+        }  
+    }
+
+    D3D11_BUFFER_DESC verBufferDesc = {};
+    verBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    verBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+    verBufferDesc.CPUAccessFlags = 0;
+    verBufferDesc.MiscFlags = 0;
+    verBufferDesc.ByteWidth = sizeof( vertices );
+    verBufferDesc.StructureByteStride = sizeof(Vertex);
+
+    D3D11_SUBRESOURCE_DATA resData = {};
+    resData.pSysMem = vertices;
+
+    HRESULT hr;
+    GFX_THROW_INFO(pDevice->CreateBuffer(&verBufferDesc, &resData, &pVertexBuffer));
+    
+    // Bind vertex buffer to pipeline
+    const UINT stride = sizeof(Vertex);
+    const UINT offset = 0;
+    pContext->IASetVertexBuffers(0, 1, pVertexBuffer.GetAddressOf(), &stride, &offset );
+
+    // create vertex shader
+    GFX_THROW_INFO( D3DReadFileToBlob( L"Chip8VertexShader.cso",&pBlob ) );
+    GFX_THROW_INFO( pDevice->CreateVertexShader( pBlob->GetBufferPointer(),pBlob->GetBufferSize(),nullptr, &pVertexShader ) );
+    
+    // bind vertex shader
+    pContext->VSSetShader(pVertexShader.Get(), nullptr, 0);
+
+    // input (vertex) layout (2d position only)
+    const D3D11_INPUT_ELEMENT_DESC ied[] = 
+        {{"Position",
+            0,
+            DXGI_FORMAT_R16G16_UINT,
+            0,
+            0 ,
+            D3D11_INPUT_PER_VERTEX_DATA,
+            0
+        }};
+    
+    // Create the Input Layout to tell what type of data we are sending to the VertexShader
+    GFX_THROW_INFO(pDevice->CreateInputLayout(
+        ied, std::size(ied),
+        pBlob->GetBufferPointer(), //Must be the blob with the VertexShader
+        pBlob->GetBufferSize(),
+        &pInputLayout));
+
+    // Bind Input Layer
+    pContext->IASetInputLayout(pInputLayout.Get());
+}
+
+void Graphics::SetupPixelShader()
+{
+    HRESULT hr;
+
+    // Create Pixel Shader
+    GFX_THROW_INFO(D3DReadFileToBlob(L"PixelShader.cso", &pBlob));
+    GFX_THROW_INFO(pDevice->CreatePixelShader(pBlob->GetBufferPointer(), pBlob->GetBufferSize(), nullptr, &pPixelShader));
+
+    // Bind Pixel Shader
+    pContext->PSSetShader(pPixelShader.Get(), nullptr, 0);
 }
 
 Graphics::Exception::Exception(int line, const char* file, std::vector<std::string> infoMsgs) noexcept: Chip8Exception(line, file)
@@ -181,5 +328,6 @@ std::string Graphics::HrException::GetErrorString() const noexcept
 {
     return TranslateErrorCode(hr);
 }
+
 
 

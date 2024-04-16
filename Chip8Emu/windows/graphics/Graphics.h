@@ -13,6 +13,7 @@
 
 
 // graphics exception checking/throwing macros (some with dxgi infos)
+#define GFX_CUSTOM_EXCEPT(string) Graphics::Exception( __LINE__,__FILE__,{(string)} )
 #define GFX_EXCEPT_NOINFO(hr) Graphics::HrException( __LINE__,__FILE__,(hr) )
 #define GFX_THROW_NOINFO(hrcall) if( FAILED( hr = (hrcall) ) ) throw Graphics::HrException( __LINE__,__FILE__,hr )
 
@@ -40,108 +41,22 @@ public:
     Graphics& operator=(Graphics&& other) noexcept = delete;
 
     // API
-    void EndFrame();
-    void ClearBuffer(float red, float green, float blue) const;
-    void DrawTestTriangle()
+    struct Vertex
     {
-        namespace wrl = Microsoft::WRL;
+        UINT16 x;
+        UINT16 y;
+    };
+    
+    void EndFrame();
+    void ClearBuffer(float red, float green, float blue);
+    void ClearScreen();
+    void SetPixelOn(int x, int y);
 
-        struct Vertex
-        {
-            float x;
-            float y;
-        };
-
-        auto size = 0.5f;
-        const Vertex vertices[] =
-        {
-            { -size,size },
-            { size,size },
-            { -size, -size },
-            // { 1.0f,-1.0f  },
-            // { -1.0f,1.0f },
-        };
-
-        wrl::ComPtr<ID3D11Buffer> pVertexBuffer;
-        D3D11_BUFFER_DESC desc = {};
-        desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-        desc.Usage = D3D11_USAGE_DEFAULT;
-        desc.CPUAccessFlags = 0;
-        desc.MiscFlags = 0;
-        desc.ByteWidth = sizeof(vertices);
-        desc.StructureByteStride = sizeof(Vertex);
-        
-        D3D11_SUBRESOURCE_DATA resData ;
-        resData.pSysMem = vertices;
-
-        HRESULT hr;
-        GFX_THROW_INFO(pDevice->CreateBuffer(&desc, &resData, &pVertexBuffer));
-
-        // Bind vertex buffer to pipeline
-        const UINT stride = sizeof(Vertex);
-        const UINT offset = 0;
-        pContext->IASetVertexBuffers(0, 1, pVertexBuffer.GetAddressOf(), &stride, &offset );
-
-        // Create vertex shader
-        wrl::ComPtr<ID3D11VertexShader> pVertexShader;
-        wrl::ComPtr<ID3DBlob> pBlob;
-        GFX_THROW_INFO(D3DReadFileToBlob(L"VertexShader.cso", &pBlob));
-        GFX_THROW_INFO(pDevice->CreateVertexShader(pBlob->GetBufferPointer(), pBlob->GetBufferSize(), nullptr, &pVertexShader));
-
-        // Bind vertex shader
-        pContext->VSSetShader(pVertexShader.Get(), nullptr, 0);
-        
-        // input (vertex) layout (2d position only)
-        wrl::ComPtr<ID3D11InputLayout> pInputLayout;
-        const D3D11_INPUT_ELEMENT_DESC ied[] = 
-            {{"Position",
-                0,
-                DXGI_FORMAT_R32G32_FLOAT,
-                0,
-                0 ,
-                D3D11_INPUT_PER_VERTEX_DATA,
-                0
-            }};
-
-        
-        GFX_THROW_INFO(pDevice->CreateInputLayout(
-            ied,
-            (UINT)std::size(ied),
-            pBlob->GetBufferPointer(), //Must be the blob with the VertexShader
-            pBlob->GetBufferSize(),
-            &pInputLayout));
-
-        // Bind Input Layer
-        pContext->IASetInputLayout(pInputLayout.Get());
-
-        // Create pixel shader
-        wrl::ComPtr<ID3D11PixelShader> pPixelShared;
-        GFX_THROW_INFO(D3DReadFileToBlob(L"PixelShader.cso", &pBlob));
-        GFX_THROW_INFO(pDevice->CreatePixelShader(pBlob->GetBufferPointer(), pBlob->GetBufferSize(), nullptr, &pPixelShared));
-
-        // Bind vertex shader
-        pContext->PSSetShader(pPixelShared.Get(), nullptr, 0);
-
-        // Bind Render Target
-        pContext->OMSetRenderTargets(1, pTarget.GetAddressOf(), nullptr);
-
-        //Set the primitive topology
-        // Defines what to draw with the given points
-        pContext->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-
-        // Configure ViewPort
-        D3D11_VIEWPORT vp {
-            0,
-            0,
-            WINDOW_WIDTH,
-            WINDOW_HEIGHT,
-            0,0
-        };
-        pContext->RSSetViewports(1, &vp);
-        
-        GFX_THROW_INFO_ONLY(pContext->Draw((UINT)std::size(vertices), 0))
-    }
-
+private:
+    void SetupPipeline();
+    void SetupVertexShader();
+    void SetupPixelShader();
+    void DrawPixels();
 
 public:
     class Exception : public Chip8Exception
@@ -185,6 +100,16 @@ private:
     Microsoft::WRL::ComPtr<ID3D11DeviceContext> pContext;
     Microsoft::WRL::ComPtr<ID3D11RenderTargetView> pTarget;
 
+    // Buffers
+    std::vector<UINT32> indices = {};
+    bool pipelineSetup = false;
+    Microsoft::WRL::ComPtr<ID3D11Buffer> pVertexBuffer;
+    Microsoft::WRL::ComPtr<ID3D11VertexShader> pVertexShader;
+    Microsoft::WRL::ComPtr<ID3D11InputLayout> pInputLayout;
+    Microsoft::WRL::ComPtr<ID3D11PixelShader> pPixelShader;
+    Microsoft::WRL::ComPtr<ID3D11Buffer> pIndexBuffer;
+    Microsoft::WRL::ComPtr<ID3DBlob> pBlob;
+    
 #ifndef NDEBUG
     DxgiInfoManager infoManager;
 #endif

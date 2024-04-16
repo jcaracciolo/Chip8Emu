@@ -7,7 +7,7 @@
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
 {
-    auto app = App{L"Chip8Emu - Best emu", WINDOW_HEIGHT, WINDOW_WIDTH};
+    auto app = App{L"Chip8Emu - Best emu", WINDOW_WIDTH, WINDOW_HEIGHT};
     try
     {
         return app.Run();

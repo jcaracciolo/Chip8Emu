@@ -6,7 +6,7 @@
 #include "Window.h"
 #include "../utils/Keyboard.h"
 
-App::App(LPCWSTR title, int height, int width): wnd(title, height, width)
+App::App(LPCWSTR title, int width, int height): wnd(title, width, height)
 {
 }
 
@@ -18,6 +18,7 @@ int App::Run()
         {
             return *ecode;
         }
+        wnd.Gfx().ClearBuffer(0,0,0);
 
         DrawFrame();
     }
@@ -26,7 +27,21 @@ int App::Run()
 void App::DrawFrame()
 {
     const float c = sin( timer.Peek()) / 2.0f + 0.5f;
-    wnd.Gfx().ClearBuffer(c,c/4,c/2);
-    wnd.Gfx().DrawTestTriangle();
+    static int a = 0;
+    a++;
+
+    for(int y=0; y< CHIP8_HEIGHT; y++)
+    {
+        for(int x=0; x<CHIP8_WIDTH; x++)
+        {
+            auto pos = x + y * CHIP8_WIDTH;
+        
+            if (pos < a) {
+                wnd.Gfx().SetPixelOn(x, y);
+            }
+           
+        }
+    }
+    
     wnd.Gfx().EndFrame();
 }
