@@ -1,10 +1,12 @@
 ﻿#pragma once
 #include "LightWindows.h"
 #include "../utils/Chip8Exception.h"
-#include "../utils/Keyboard.h"
+#include "Keyboard.h"
 #include "graphics/Graphics.h"
 #include <memory.h>
 #include <memory>
+
+#include "Keyboard.h"
 
 class Window
 {

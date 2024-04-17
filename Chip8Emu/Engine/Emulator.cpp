@@ -2,13 +2,18 @@
 
 #include <complex.h>
 
+Emulator::Emulator(IsKeyPressed pFunc): isKeypadPressed(std::move(pFunc))
+{
+    std::memcpy(&memory[fontPosition], font, std::size(font));
+}
+
 void Emulator::LoadRom(const C8_BYTE* rom, int size)
 {
     std::memcpy(&memory[0x200], rom, size);
     pc = 0x200;
 }
 
-bool Emulator::Tick()
+Emulator::State Emulator::Tick()
 {
     C8_INSTRUCTION instruction = Fetch();
     auto info = Instructions::GetInfo(instruction);
@@ -23,38 +28,18 @@ bool Emulator::Tick()
 
     switch (info.ins)
     {
+    case CLS:
+        display->reset();
+        return DRAW;
+    case RET:
+        pc = stack.top();
+        break;
     case JP_addr:
         pc = value;
         break;
-    case LD_Vx_byte:
-        registers[upper] = lower;
-        break;
-    case LD_Vx_Vy:
-        registers[upper] = registers[lower];
-        break;
-    case LD_I_addr:
-        index = value;
-        break;
-    case LD_I_Vx:
-        for (int i = 0; i < upper; ++i) {
-            memory[index + i] = registers[i];
-        }
-        break;
-    case LD_Vx_I:
-        for (int i = 0; i < upper; ++i) {
-            registers[i] = memory[index + i];
-        }
-        break;
-    case LD_B_Vx:
-        // for (int i = 0; i < upper; ++i) {
-        //     registers[i] = memory[index + i];
-        // }
-        break;
-    case CLS:
-        display->reset();
-        break;
-    case DRW_Vx_Vy_nibble:
-        registers[0xF] = LoadSprite(upper, mid, lowest);
+    case CALL_addr:
+        stack.push(pc);
+        pc = value;
         break;
     case SE_Vx_byte:
         if (registers[upper] == lower)
@@ -64,6 +49,37 @@ bool Emulator::Tick()
         if (registers[upper] != lower)
             pc += 2;
         break;
+    case ADD_I_Vx:
+        index += registers[upper];
+        break;
+    case LD_Vx_byte:
+        registers[upper] = lower;
+        break;
+    case LD_Vx_Vy:
+        registers[upper] = registers[mid];
+        break;
+    case LD_I_addr:
+        index = value;
+        break;
+    case LD_I_Vx:
+        for (int i = 0; i <= upper; ++i) {
+            memory[index + i] = registers[i];
+        }
+        break;
+    case LD_Vx_I:
+        for (int i = 0; i <= upper; ++i) {
+            registers[i] = memory[index + i];
+        }
+        break;
+    case LD_B_Vx:
+        memory[index] = static_cast<C8_BYTE>(registers[upper] / 100);
+        memory[index+1] = static_cast<C8_BYTE>(registers[upper] %100 / 10);
+        memory[index+2] = static_cast<C8_BYTE>(registers[upper] %10);
+        break;
+    case DRW_Vx_Vy_nibble:
+        registers[0xF] = LoadSprite(upper, mid, lowest);
+        return DRAW;
+
     case SE_Vx_Vy:
         if (registers[upper] == registers[mid])
             pc += 2;
@@ -77,47 +93,70 @@ bool Emulator::Tick()
         registers[upper] += lower;
         break;
     case ADD_Vx_Vy:
-        registers[0xF] = static_cast<C8_BYTE>(registers[upper] + registers[lower]) < registers[upper];
-        registers[upper] += registers[lower];
+        registers[0xF] = static_cast<C8_BYTE>(registers[upper] + registers[mid]) < registers[upper];
+        registers[upper] += registers[mid];
         break;
     case SUB_Vx_Vy:
-        registers[0xF] = registers[lower] > registers[upper];
-        registers[upper] -= registers[lower];
+        registers[0xF] = registers[upper] > registers[mid];
+        registers[upper] = registers[upper] -registers[mid];
         break;
-    case CALL_addr:
-        stack.push(pc);
-        pc = value;
+    case SUBN_Vx_Vy:
+        registers[0xF] = registers[mid] > registers[upper];
+        registers[upper] = registers[mid] - registers[upper];
         break;
-    case RET:
-        pc = stack.top();
-        break;
+
+
     case OR_Vx_Vy:
-        registers[upper] = registers[upper] | registers[lower];
+        registers[upper] = registers[upper] | registers[mid];
         break;
     case AND_Vx_Vy:
-        registers[upper] = registers[upper] & registers[lower];
+        registers[upper] = registers[upper] & registers[mid];
         break;
     case XOR_Vx_Vy:
-        registers[upper] = registers[upper] ^ registers[lower];
+        registers[upper] = registers[upper] ^ registers[mid];
         break;
     case SHL_Vx_Vy:
         // TODO this should be configurable
-        registers[upper] = registers[mid];
-        registers[0xF] = bool(registers[upper] & -registers[upper]);
+        // registers[upper] = registers[mid];
+        registers[0xF] = bool(registers[upper] & 0x80);
         registers[upper] <<= 1;
         break;
     case SHR_Vx_Vy:
         // TODO this should be configurable
-        registers[upper] = registers[mid];
+        // registers[upper] = registers[mid];
         registers[0xF] = bool(registers[upper] & 1);
         registers[upper] >>= 1;
         break;
-        
+    case LD_F_Vx:
+        index = static_cast<C8_BYTE>(fontPosition + characterSize * registers[upper]);
+        break;
+    case LD_ST_Vx:
+        sound.Set(registers[upper]);
+        break;
+    case LD_DT_Vx:
+        delay.Set(registers[upper]);
+        break;
+    case LD_Vx_DT:
+        registers[upper] = delay.Get();
+        break;
+    case LD_Vx_K:
+        return WAIT_FOR_INPUT;
+    case RND_Vx_byte:
+        registers[upper] = static_cast<C8_BYTE>(rand()) && lower;  // NOLINT(concurrency-mt-unsafe)
+        break;
+    case SKNP_Vx:
+        if(!isKeypadPressed(registers[upper]))
+            pc+=2;
+        break;
+    case SKP_Vx:
+        if(isKeypadPressed(registers[upper]))
+            pc+=2;
+        break;
     default:
         throw "NOT SURE";
     }
 
-    return info.ins == CLS || info.ins == DRW_Vx_Vy_nibble;
+    return READY;
 }
 
 const std::bitset<CHIP8_WIDTH>* Emulator::getScreen() const
