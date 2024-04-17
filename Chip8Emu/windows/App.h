@@ -16,4 +16,5 @@ private:
 private:
     Window wnd;
     MyTimer timer;
+    Emulator emu;
 };

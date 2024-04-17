@@ -108,7 +108,12 @@ void Graphics::SetPixelOn(int x, int y)
 
 void Graphics::DrawPixels()
 {
-    UINT size = std::size(indices);
+    UINT size = static_cast<UINT>(std::size(indices));
+
+    if(size == 0)
+    {
+        return ClearBuffer(0,0,0);
+    }
     
     D3D11_BUFFER_DESC ibd = {};
     ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;

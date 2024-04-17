@@ -3,14 +3,17 @@
 
 #include "windows/LightWindows.h"
 #include "Chip8Emu.h"
+
+#include "Engine/Instructions.h"
 #include "windows/App.h"
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
 {
-    auto app = App{L"Chip8Emu - Best emu", WINDOW_WIDTH, WINDOW_HEIGHT};
+    std::unique_ptr<App> app; 
     try
     {
-        return app.Run();
+        app = std::make_unique<App>(L"Chip8Emu - Best emu", WINDOW_WIDTH, WINDOW_HEIGHT);
+        return app->Run();
     }
     catch (const Chip8Exception& e)
     {
