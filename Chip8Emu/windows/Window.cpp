@@ -6,6 +6,8 @@
 #include <WinUser.h>
 #include <sstream>
 
+#include "../utils/C8Keyboard.h"
+
 // Window Class Stuff
 Window::WindowClass Window::WindowClass::wndClass;
 
@@ -105,7 +107,7 @@ HINSTANCE Window::WindowClass::GetInstance() noexcept
     return wndClass.hInst;
 }
 
-Window::Window(const LPCWSTR name, int width, int height) : width(width), height(height)
+Window::Window(const LPCWSTR name, int width, int height, C8Keyboard& kp): kp(kp), width(width), height(height)
 {
 
     RECT wr;
@@ -238,11 +240,13 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         if(!(lParam & KF_REPEAT) || kb.AutoRepeatIsEnabled())
         {
             kb.onKeyPressed(static_cast<unsigned char>(wParam));
+            kp.SetKeyPressed(static_cast<unsigned char>(wParam));
         }
         break;
     case WM_KEYUP:
     case WM_SYSKEYUP:
         kb.onKeyReleased(static_cast<unsigned char>(wParam));
+        kp.SetKeyReleased(static_cast<unsigned char>(wParam));
         break;
     case WM_CHAR:
         kb.OnChar(static_cast<char>(wParam));

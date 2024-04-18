@@ -1,33 +1,23 @@
 ﻿#pragma once
 #include <bitset>
-#include <functional>
 #include <stack>
-#include <vector>
 
 #include "Instructions.h"
+#include "KeyPad.h"
 #include "Timer.h"
 
 constexpr int CHIP8_HEIGHT = 32;
 constexpr int CHIP8_WIDTH = 64;
 
 
-typedef std::function<bool(C8_BYTE)> IsKeyPressed;
-
 class Emulator
 {
 public:
-    enum State
-    {
-        READY,
-        // TODO implement lock this
-        WAIT_FOR_INPUT,
-        DRAW
-    };
-    
-    Emulator(IsKeyPressed pFun);
-    void LoadRom(const C8_BYTE* rom, int size);
-    State Tick();
+    Emulator();
+    void LoadRom(const C8_BYTE* rom, long long size);
+    bool Tick();
     const std::bitset<CHIP8_WIDTH>* getScreen() const;
+    KeyPad keypad;
 
 private:
     bool LoadSprite(C8_BYTE Vx, C8_BYTE Vy, C8_BYTE bytes);
@@ -40,7 +30,7 @@ private:
     C8_POINTER index = 0;
     Timer delay;
     Timer sound;
-    IsKeyPressed isKeypadPressed;
+    char shouldLoadKeypad = -1;
 
 
     C8_INSTRUCTION Fetch();

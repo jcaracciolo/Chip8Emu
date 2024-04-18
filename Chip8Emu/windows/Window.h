@@ -3,15 +3,14 @@
 #include "../utils/Chip8Exception.h"
 #include "Keyboard.h"
 #include "graphics/Graphics.h"
-#include <memory.h>
 #include <memory>
 
-#include "Keyboard.h"
+#include "../utils/C8Keyboard.h"
 
 class Window
 {
 public:
-    Window(const LPCWSTR name, int width, int height);
+    Window(const LPCWSTR name, int width, int height, C8Keyboard& kp);
     ~Window();
     Window(const Window& other) = delete;
     Window(Window&& other) noexcept = delete;
@@ -23,6 +22,7 @@ public:
     static std::optional<int> ProcessMessage();
 
     Keyboard kb;
+    C8Keyboard& kp;
     Graphics& Gfx();
 
     class Exception : public Chip8Exception

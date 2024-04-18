@@ -147,6 +147,7 @@
     <ClInclude Include="Chip8Emu.h" />
     <ClInclude Include="Engine\Emulator.h" />
     <ClInclude Include="Engine\Instructions.h" />
+    <ClInclude Include="Engine\KeyPad.h" />
     <ClInclude Include="Engine\Timer.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="ResourceFiles/Resource.h" />
@@ -167,6 +168,7 @@
     <ClCompile Include="Chip8Emu.cpp" />
     <ClCompile Include="Engine\Emulator.cpp" />
     <ClCompile Include="Engine\Instructions.cpp" />
+    <ClCompile Include="Engine\KeyPad.cpp" />
     <ClCompile Include="Engine\Timer.cpp" />
     <ClCompile Include="utils\C8Keyboard.cpp">
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -654,10 +656,12 @@
   <ItemGroup>
     <Content Include="roms\bc_test.ch8" />
     <Content Include="roms\IBM Logo.ch8" />
+    <Content Include="roms\MAZE" />
     <Content Include="roms\PONG.ch8" />
     <Content Include="roms\PUZZLE" />
     <Content Include="roms\SCTEST" />
     <Content Include="roms\test_opcode.ch8" />
+    <Content Include="roms\WALL" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

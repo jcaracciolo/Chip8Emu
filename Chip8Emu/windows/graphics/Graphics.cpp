@@ -212,7 +212,7 @@ void Graphics::SetupVertexShader()
     
     // Create the Input Layout to tell what type of data we are sending to the VertexShader
     GFX_THROW_INFO(pDevice->CreateInputLayout(
-        ied, std::size(ied),
+        ied, static_cast<UINT>(std::size(ied)),
         pBlob->GetBufferPointer(), //Must be the blob with the VertexShader
         pBlob->GetBufferSize(),
         &pInputLayout));

@@ -7,8 +7,7 @@
 #include "Keyboard.h"
 #include "FileManager.h"
 
-App::App(LPCWSTR title, int width, int height): wnd(title, width, height), keypad(wnd.kb),
-                                                emu([&](C8_BYTE key) { return keypad.GetKeyState(key); })
+App::App(LPCWSTR title, int width, int height): c8Keyboard(emu.keypad), wnd(title, width, height, c8Keyboard) 
 {
 }
 

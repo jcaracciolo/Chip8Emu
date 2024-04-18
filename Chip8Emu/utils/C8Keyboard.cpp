@@ -1,12 +1,11 @@
 ﻿#include "C8Keyboard.h"
 
-bool C8Keyboard::GetKeyState(C8_BYTE key)
+void C8Keyboard::SetKeyPressed(unsigned char keycode)
 {
-    if(key > 0xF)
-    {
-        return false;
-    }
+    kp.SetKeyPressed(keycodes[keycode]);
+}
 
-    auto a =kb.KeyIsPressed(keycodes[key]);
-    return a; 
+void C8Keyboard::SetKeyReleased(unsigned char keycode)
+{
+    kp.SetKeyReleased(keycodes[keycode]);
 }

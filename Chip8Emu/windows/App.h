@@ -17,6 +17,6 @@ private:
 private:
     Window wnd;
     MyTimer timer;
-    C8Keyboard keypad;
+    C8Keyboard c8Keyboard;
     Emulator emu;
 };
