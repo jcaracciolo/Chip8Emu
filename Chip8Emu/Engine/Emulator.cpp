@@ -239,18 +239,3 @@ C8_INSTRUCTION Emulator::Fetch()
     pc += 2;
     return firstNibble | secondNibble;
 }
-
-C8_BYTE* Emulator::At(C8_POINTER location)
-{
-    return &memory[location];
-}
-
-C8_POINTER Emulator::Pop()
-{
-    return stack.top();
-}
-
-void Emulator::PUSH(C8_POINTER address)
-{
-    stack.push(address);
-}
