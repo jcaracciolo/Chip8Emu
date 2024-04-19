@@ -21,6 +21,7 @@ public:
 
 private:
     bool LoadSprite(C8_BYTE Vx, C8_BYTE Vy, C8_BYTE bytes);
+    void clearScreen();
     std::bitset<CHIP8_WIDTH> display[CHIP8_HEIGHT] = {};
     C8_BYTE memory[4096] = {};
     C8_BYTE registers[16] = {};

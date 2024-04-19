@@ -7,6 +7,8 @@ class Timer
 public:
     C8_BYTE Get();
     void Set(C8_BYTE value);
+    void Pause();
+    void Resume();
 
 private:
     C8_BYTE value = 0;

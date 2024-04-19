@@ -1,9 +1,8 @@
 ﻿#include "App.h"
 
-#include <iomanip>
+#include <thread>
 
-#include "LightWindows.h"
-#include "Window.h"
+#include "Window.h"]
 #include "Keyboard.h"
 #include "FileManager.h"
 
@@ -17,7 +16,7 @@ int App::Run()
 
 
     C8_BYTE* file;
-    auto size = FileManager::ReadRom("roms/PUZZLE", &file);
+    auto size = FileManager::ReadRom("roms/TETRIS", &file);
     // TODO check size is correct
     emu.LoadRom(file, size);
 

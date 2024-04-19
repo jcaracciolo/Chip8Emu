@@ -16,5 +16,5 @@ public:
 private:
     std::bitset<0xF+1> keypad;
     bool isExpectingInput = false;
-    C8_BYTE lastKeyPresed = 0;
+    C8_BYTE lastKeyReleased = 0;
 };

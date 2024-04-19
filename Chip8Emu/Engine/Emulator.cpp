@@ -1,5 +1,6 @@
 ﻿#include "Emulator.h"
 #include <complex>
+#include <thread>
 
 Emulator::Emulator()
 {
@@ -23,6 +24,8 @@ bool Emulator::Tick()
     if (shouldLoadKeypad >= 0)
     {
         registers[shouldLoadKeypad] = keypad.GetLastKeyPressed();
+        sound.Resume();
+        delay.Resume();
         shouldLoadKeypad = -1;
     }
 
@@ -36,14 +39,16 @@ bool Emulator::Tick()
     C8_BYTE upper = GET_UPPER_BYTE(value);
     C8_BYTE lowest = GET_LOWEST_BYTE(value);
     C8_BYTE mid = GET_MID_BYTE(value);
+    C8_BYTE setFlag = 0;
 
     switch (info.ins)
     {
     case CLS:
-        display->reset();
+        clearScreen();
         break;
     case RET:
         pc = stack.top();
+        stack.pop();
         break;
     case SYS_addr:
     case JP_addr:
@@ -69,7 +74,9 @@ bool Emulator::Tick()
         registers[upper] = lower;
         break;
     case ADD_Vx_byte:
-        registers[0xF] = static_cast<C8_BYTE>(registers[upper] + lower) < registers[upper];
+        // For some reason other emulators do not account the flag in this case
+        std::this_thread::sleep_for(std::chrono::nanoseconds(300));
+
         registers[upper] += lower;
         break;
     case LD_Vx_Vy:
@@ -85,28 +92,31 @@ bool Emulator::Tick()
         registers[upper] = registers[upper] ^ registers[mid];
         break;
     case ADD_Vx_Vy:
-        registers[0xF] = static_cast<C8_BYTE>(registers[upper] + registers[mid]) < registers[upper];
+        setFlag = static_cast<C8_BYTE>(registers[upper] + registers[mid]) < registers[mid];
         registers[upper] += registers[mid];
+        registers[0xF] = setFlag;
         break;
     case SUB_Vx_Vy:
-        registers[0xF] = registers[upper] > registers[mid];
+        setFlag = registers[upper] > registers[mid];
         registers[upper] = registers[upper] - registers[mid];
+        registers[0xF] = setFlag;
         break;
     case SHR_Vx_Vy:
         // TODO this should be configurable
         registers[upper] = registers[mid];
-        registers[0xF] = bool(registers[upper] & 1);
+        setFlag = bool(registers[upper] & 1);
         registers[upper] >>= 1;
+        registers[0xF] = setFlag;
         break;
     case SUBN_Vx_Vy:
-        registers[0xF] = registers[mid] > registers[upper];
         registers[upper] = registers[mid] - registers[upper];
         break;
     case SHL_Vx_Vy:
         // TODO this should be configurable
         registers[upper] = registers[mid];
-        registers[0xF] = bool(registers[upper] & 0x80);
+        setFlag = bool(registers[upper] & 0x80);
         registers[upper] <<= 1;
+        registers[0xF] = setFlag;
         break;
     case SNE_Vx_Vy:
         if (registers[upper] != registers[mid])
@@ -130,13 +140,22 @@ bool Emulator::Tick()
         break;
     case SKNP_Vx:
         if (!keypad.IsKeyPressed(registers[upper]))
+        {
             pc += 2;
+        }
+        else
+        {
+            pc++;
+            pc--;
+        }
         break;
     case LD_Vx_DT:
         registers[upper] = delay.Get();
         break;
     case LD_Vx_K:
         keypad.SetExpectingInput();
+        sound.Pause();
+        delay.Pause();
         shouldLoadKeypad = static_cast<char>(upper);
         break;
     case LD_DT_Vx:
@@ -169,7 +188,7 @@ bool Emulator::Tick()
         }
         break;
     }
-
+    
     return info.ins == CLS || info.ins == DRW_Vx_Vy_nibble;
 }
 
@@ -206,6 +225,14 @@ bool Emulator::LoadSprite(C8_BYTE Vx, C8_BYTE Vy, C8_BYTE bytes)
     }
 
     return collision;
+}
+
+void Emulator::clearScreen()
+{
+    for (int i = 0; i < CHIP8_HEIGHT; ++i)
+    {
+        display[i].reset();
+    }
 }
 
 C8_INSTRUCTION Emulator::Fetch()
