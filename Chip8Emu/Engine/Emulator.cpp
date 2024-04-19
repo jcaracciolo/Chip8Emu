@@ -75,6 +75,7 @@ bool Emulator::Tick()
         break;
     case ADD_Vx_byte:
         // For some reason other emulators do not account the flag in this case
+        // Tetris uses a counter as a sleep which should not be the case
         std::this_thread::sleep_for(std::chrono::nanoseconds(300));
 
         registers[upper] += lower;
@@ -140,14 +141,7 @@ bool Emulator::Tick()
         break;
     case SKNP_Vx:
         if (!keypad.IsKeyPressed(registers[upper]))
-        {
             pc += 2;
-        }
-        else
-        {
-            pc++;
-            pc--;
-        }
         break;
     case LD_Vx_DT:
         registers[upper] = delay.Get();

@@ -18,6 +18,7 @@ typedef UINT16 C8_INSTRUCTION;
 
 typedef unsigned char C8_BYTE;
 
+// Reference: http://devernay.free.fr/hacks/chip8/C8TECH10.HTM
 enum InstructionSet: unsigned int
 {
     CLS         = 0xFFFF00E0, // 00E0 - CLS

@@ -33,13 +33,7 @@ private:
     Timer sound;
     char shouldLoadKeypad = -1;
 
-
     C8_INSTRUCTION Fetch();
-
-
-    C8_BYTE* At(C8_POINTER location);
-    C8_POINTER Pop();
-    void PUSH(C8_POINTER address);
 
     static constexpr C8_BYTE fontPosition = 0x50;
     static constexpr C8_BYTE characterSize = 5;
